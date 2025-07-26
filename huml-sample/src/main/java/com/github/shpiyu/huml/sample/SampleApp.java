@@ -14,21 +14,19 @@ public class SampleApp {
      * 
      * @param args Command line arguments (not used)
      */
-    public static void main(String[] args) throws IOException{
-        // Create HUMLMapper and register custom adapter
+    public static void main(String[] args) throws IOException {
+        // Create HUMLMapper and register generated adapter
         HUMLMapper mapper = new HUMLMapper();
-        mapper.registerAdapter(Person.class, new Person.PersonAdapter());
+        mapper.registerAdapter(Student.class, new StudentHUMLAdapter());
 
-        // Sample HUML document
-        String huml = """
-                name: John Doe
-                age: 30
-                city: New York
-                """;
+        Student s = new Student();
+        s.name = "John Doe";
+        s.age = 20;
+        s.totalMarks = 95.5;
+        s.school = "ABC School";
+        s.hasCompletedMedicalCheck = true;
 
-        Person person = mapper.readValue(huml, Person.class);
-        String serialized = mapper.writeValueAsString(person);
-        System.out.println("Parsed person: " + person);
+        String serialized = mapper.writeValueAsString(s);
         System.out.println("Serialized: " + serialized);
     }
 }
