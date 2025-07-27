@@ -1,6 +1,7 @@
 package com.github.shpiyu.huml.sample;
 
 import java.io.IOException;
+import java.util.List;
 
 import com.github.shpiyu.huml.HUMLMapper;
 
@@ -25,6 +26,10 @@ public class SampleApp {
         s.totalMarks = 95.5;
         s.school = "ABC School";
         s.hasCompletedMedicalCheck = true;
+        s.skills = List.of("Java", "Python", "C++");
+        s.powers = List.of(1,50,100);
+        s.nothing = List.of();
+        
 
         String serialized = mapper.writeValueAsString(s);
         System.out.println("Serialized: " + serialized);
