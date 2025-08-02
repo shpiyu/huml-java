@@ -4,9 +4,20 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Mapper class for serializing and deserializing objects to and from HUML format. Allows 
+ * registration of custom adapters for specific types. 
+ */
 public class HUMLMapper {
+
     private final Map<Class<?>, HUMLAdapter<?>> adapters = new HashMap<>();
 
+    /**
+     * Registers an adapter for a specific type.
+     * 
+     * @param type The type to register the adapter for.
+     * @param adapter The adapter to register.
+     */
     public <T> void registerAdapter(Class<T> type, HUMLAdapter<T> adapter) {
         adapters.put(type, adapter);
     }

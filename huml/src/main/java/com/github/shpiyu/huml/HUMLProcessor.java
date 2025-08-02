@@ -2,6 +2,8 @@ package com.github.shpiyu.huml;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -16,9 +18,10 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.tools.JavaFileObject;
-import java.util.Map;
-import java.util.HashMap;
 
+/**
+ * HUMLProcessor creates HUMLAdapter classes for classes annotated with @HUML.
+ */
 @SupportedAnnotationTypes("com.github.shpiyu.huml.HUML")
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
 public class HUMLProcessor extends AbstractProcessor {
@@ -46,7 +49,6 @@ public class HUMLProcessor extends AbstractProcessor {
     // Map to store type handlers
     private final Map<String, TypeHandler> typeHandlers = new HashMap<>();
     private final Map<String, SerializationHandler> serializationHandlers = new HashMap<>();
-    private final Map<String, String> listElementTypes = new HashMap<>();
 
     private Filer filer;
     private Elements elementUtils;
@@ -59,35 +61,38 @@ public class HUMLProcessor extends AbstractProcessor {
         initTypeHandlers();
     }
 
+    @Override
+    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        for (Element e : roundEnv.getElementsAnnotatedWith(HUML.class)) {
+            if (e.getKind() != ElementKind.CLASS)
+                continue;
+            TypeElement classElement = (TypeElement) e;
+            generateAdapter(classElement);
+        }
+        return true;
+    }
+
     // Initialize type handlers
     private void initTypeHandlers() {
-        // Primitive types and their wrapper classes
-        typeHandlers.put("int", fieldName -> "Integer.parseInt((String) map.get(\"" + fieldName + "\"));");
-        typeHandlers.put("java.lang.Integer", typeHandlers.get("int"));
 
-        typeHandlers.put("boolean", fieldName -> "Boolean.parseBoolean((String) map.get(\"" + fieldName + "\"));");
-        typeHandlers.put("java.lang.Boolean", typeHandlers.get("boolean"));
+        // Wrapper type handlers
+        // todo: handle Character
+        // todo: handle Strings with special characters \t, \n, etc
+        typeHandlers.put("java.lang.Integer", field -> String.format("parseInt(map.get(\"%s\"));", field));
+        typeHandlers.put("java.lang.Double", field -> String.format("parseDouble(map.get(\"%s\"));", field));
+        typeHandlers.put("java.lang.Float", field -> String.format("parseFloat(map.get(\"%s\"));", field));
+        typeHandlers.put("java.lang.Long", field -> String.format("parseLong(map.get(\"%s\"));", field));
+        typeHandlers.put("java.lang.Short", field -> String.format("parseShort(map.get(\"%s\"));", field));
+        typeHandlers.put("java.lang.Byte", field -> String.format("parseByte(map.get(\"%s\"));", field));
+        typeHandlers.put("java.lang.String", field -> String.format("parseString(map.get(\"%s\"));", field));
 
-        typeHandlers.put("double", fieldName -> "Double.parseDouble((String) map.get(\"" + fieldName + "\"));");
-        typeHandlers.put("java.lang.Double", typeHandlers.get("double"));
-
-        typeHandlers.put("float", fieldName -> "Float.parseFloat((String) map.get(\"" + fieldName + "\"));");
-        typeHandlers.put("java.lang.Float", typeHandlers.get("float"));
-
-        typeHandlers.put("long", fieldName -> "Long.parseLong((String) map.get(\"" + fieldName + "\"));");
-        typeHandlers.put("java.lang.Long", typeHandlers.get("long"));
-
-        typeHandlers.put("short", fieldName -> "Short.parseShort((String) map.get(\"" + fieldName + "\"));");
-        typeHandlers.put("java.lang.Short", typeHandlers.get("short"));
-
-        typeHandlers.put("byte", fieldName -> "Byte.parseByte((String) map.get(\"" + fieldName + "\"));");
-        typeHandlers.put("java.lang.Byte", typeHandlers.get("byte"));
-
-        typeHandlers.put("char", fieldName -> "Character.getNumericValue((String) map.get(\"" + fieldName + "\"));");
-        typeHandlers.put("java.lang.Character", typeHandlers.get("char"));
-
-        // String type
-        typeHandlers.put("java.lang.String", fieldName -> "(String) map.get(\"" + fieldName + "\");");
+        // Primitives handlers
+        typeHandlers.put("int", field -> String.format("parsePrimitiveInt(map.get(\"%s\"));", field));
+        typeHandlers.put("double", field -> String.format("parsePrimitiveDouble(map.get(\"%s\"));", field));
+        typeHandlers.put("float", field -> String.format("parsePrimitiveFloat(map.get(\"%s\"));", field));
+        typeHandlers.put("long", field -> String.format("parsePrimitiveLong(map.get(\"%s\"));", field));
+        typeHandlers.put("short", field -> String.format("parsePrimitiveShort(map.get(\"%s\"));", field));
+        typeHandlers.put("byte", field -> String.format("parsePrimitiveByte(map.get(\"%s\"));", field));
 
         // Initialize serialization handlers
         // For types that need String.valueOf()
@@ -107,24 +112,9 @@ public class HUMLProcessor extends AbstractProcessor {
                     fieldName -> "writer.writeField(\"" + fieldName + "\", String.valueOf(value." + fieldName + "));");
         }
 
-        // String type doesn't need String.valueOf()
+        // String type
         serializationHandlers.put("java.lang.String",
-                fieldName -> "writer.writeField(\"" + fieldName + "\", value." + fieldName + ");");
-
-        // List type handler
-        typeHandlers.put("java.util.List", fieldName -> {
-            String elementType = listElementTypes.get(fieldName);
-            if (elementType == null) {
-                return "new ArrayList<>();";
-            }
-            return String.format("map.get(\"%s\") != null ? Arrays.asList((%s[]) map.get(\"%s\")) : new ArrayList<>();", 
-                fieldName, elementType, fieldName);
-        });
-        
-        // List serialization handler
-        serializationHandlers.put("java.util.List", fieldName -> 
-            String.format("if (value.%s != null) { writer.writeList(\"%s\", value.%s); }", 
-                fieldName, fieldName, fieldName));
+                fieldName -> "writer.writeField(\"" + fieldName + "\", handleNullString(value." + fieldName + "));");
 
         // Default handler for unsupported types
         serializationHandlers.put("__DEFAULT__",
@@ -132,17 +122,7 @@ public class HUMLProcessor extends AbstractProcessor {
                         + ")); // Unsupported type");
     }
 
-    @Override
-    public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        for (Element e : roundEnv.getElementsAnnotatedWith(HUML.class)) {
-            if (e.getKind() != ElementKind.CLASS)
-                continue;
-            TypeElement classElement = (TypeElement) e;
-            generateAdapter(classElement);
-        }
-        return true;
-    }
-
+    // Generates HUMLAdapter class file
     private void generateAdapter(TypeElement classElement) {
         String packageName = elementUtils.getPackageOf(classElement).getQualifiedName().toString();
         String className = classElement.getSimpleName().toString();
@@ -153,9 +133,8 @@ public class HUMLProcessor extends AbstractProcessor {
                 .append("import com.github.shpiyu.huml.HUMLAdapter;\n")
                 .append("import com.github.shpiyu.huml.HUMLReader;\n")
                 .append("import com.github.shpiyu.huml.HUMLWriter;\n")
-                .append("import java.util.ArrayList;\n")
-                .append("import java.util.Arrays;\n")
                 .append("import java.io.IOException;\n")
+                .append("import static com.github.shpiyu.huml.HUMLParserUtils.*;\n")
                 .append("public class ").append(adapterClassName).append(" extends HUMLAdapter\u003c").append(className)
                 .append("\u003e {\n");
 
@@ -175,22 +154,9 @@ public class HUMLProcessor extends AbstractProcessor {
         }
     }
 
+    // Generates the fromHUML method which is used to parse HUML to Java object
     private void fromHUML(StringBuilder code, Element classElement) {
         String className = classElement.getSimpleName().toString();
-        
-        // Clear previous field type mappings
-        listElementTypes.clear();
-        
-        // First pass: collect List field types
-        for (Element field : classElement.getEnclosedElements()) {
-            if (field.getKind() == ElementKind.FIELD) {
-                String fieldType = field.asType().toString();
-                if (fieldType.startsWith("java.util.List<")) {
-                    String elementType = fieldType.substring("java.util.List<".length(), fieldType.length() - 1);
-                    listElementTypes.put(field.getSimpleName().toString(), elementType);
-                }
-            }
-        }
 
         code.append("    @Override\n")
                 .append("    public ").append(className).append(" fromHUML(HUMLReader reader) throws IOException {\n")
@@ -203,15 +169,9 @@ public class HUMLProcessor extends AbstractProcessor {
                 String fieldType = field.asType().toString();
                 code.append("        instance.").append(fieldName).append(" = ");
 
-                // Handle List types
-                TypeHandler handler;
-                if (fieldType.startsWith("java.util.List")) {
-                    handler = typeHandlers.get("java.util.List");
-                } else {
-                    // Get the appropriate type handler or use the unknown type handler
-                    handler = typeHandlers.getOrDefault(fieldType,
-                            type -> "null; // " + type + " not supported");
-                }
+                // Get the appropriate type handler or use the unknown type handler
+                TypeHandler handler = typeHandlers.getOrDefault(fieldType,
+                        type -> "null; // " + type + " not supported");
 
                 // Apply the handler to get the conversion code
                 String conversionCode = handler.apply(fieldName);
@@ -224,6 +184,7 @@ public class HUMLProcessor extends AbstractProcessor {
 
     }
 
+    // Generates the toHUML method which is used to serialize Java object to HUML
     private void toHUML(StringBuilder code, Element classElement) {
         String className = classElement.getSimpleName().toString();
         code.append("    @Override public void toHUML(HUMLWriter writer, ").append(className)
@@ -235,14 +196,9 @@ public class HUMLProcessor extends AbstractProcessor {
                 String fieldType = field.asType().toString();
 
                 // Get the appropriate serialization handler or use the default one
-                SerializationHandler handler;
-                if (fieldType.startsWith("java.util.List")) {
-                    handler = serializationHandlers.get("java.util.List");
-                } else {
-                    handler = serializationHandlers.getOrDefault(
-                            fieldType,
-                            serializationHandlers.get("__DEFAULT__"));
-                }
+                SerializationHandler handler = serializationHandlers.getOrDefault(
+                        fieldType,
+                        serializationHandlers.get("__DEFAULT__"));
 
                 // Generate and append the serialization code
                 String serializationCode = handler.apply(fieldName);
@@ -252,5 +208,4 @@ public class HUMLProcessor extends AbstractProcessor {
 
         code.append("    }\n");
     }
-
 }

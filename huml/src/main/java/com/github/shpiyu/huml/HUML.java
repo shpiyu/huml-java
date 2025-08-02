@@ -5,6 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Annotation to mark a class for HUML serialization and deserialization.
+ */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface HUML {

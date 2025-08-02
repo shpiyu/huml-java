@@ -9,8 +9,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>huml-core</module>
-        <module>huml-sample</module>
+        <module>huml</module>
     </modules>
 
     <properties>
