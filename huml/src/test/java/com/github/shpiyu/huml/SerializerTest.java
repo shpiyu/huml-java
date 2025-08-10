@@ -10,12 +10,12 @@ import org.junit.jupiter.api.Test;
 public class SerializerTest {
 
     private Person person;
-    private HUMLMapper mapper;
+    private HumlMapper mapper;
 
     @BeforeEach
     void setUp() {
-        mapper = new HUMLMapper();
-        mapper.registerAdapter(Person.class, new PersonHUMLAdapter());
+        mapper = new HumlMapper();
+        mapper.registerAdapter(Person.class, new PersonHumlAdapter());
         person = new Person();
     }
     

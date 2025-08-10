@@ -1,6 +1,6 @@
 package com.github.shpiyu.huml;
 
-@HUML
+@Huml
 public class Person {
     String name;
     Integer age;

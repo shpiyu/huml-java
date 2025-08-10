@@ -3,7 +3,7 @@ package com.github.shpiyu.huml;
 /**
  * Writes HUML format to a string.
  */
-public class HUMLWriter {
+public class HumlWriter {
     private final StringBuilder sb = new StringBuilder();
 
     public void writeField(String key, String value) {

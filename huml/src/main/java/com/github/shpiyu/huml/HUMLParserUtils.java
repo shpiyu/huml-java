@@ -3,7 +3,7 @@ package com.github.shpiyu.huml;
 /**
  * Utility functions for parsing HUML format.
  */
-public class HUMLParserUtils {
+public class HumlParserUtils {
     public static String handleNullString(String value) {
         if (value == null) {
             return "null";

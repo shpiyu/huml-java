@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * Reads HUML format from a string.
  */
-public class HUMLReader {
+public class HumlReader {
     private BufferedReader reader;
 
     private final String SCALAR_DELIM = ":";
@@ -20,7 +20,7 @@ public class HUMLReader {
      * 
      * @param input The input string to read from.
      */
-    public HUMLReader(String input) {
+    public HumlReader(String input) {
         this.reader = new BufferedReader(new StringReader(input));
     }
 
@@ -36,22 +36,22 @@ public class HUMLReader {
         while ((line = reader.readLine()) != null) {
             line = line.trim();
             if (line.isEmpty()) continue;
-            
-            if (line.contains(VECTOR_DELIM)) {
-                String[] parts = line.split(VECTOR_DELIM, 2);
-                String key = parts[0].trim();
-                String[] values = parts[1].trim().split(",");
-                for (int i = 0; i < values.length; i++) {
-                    values[i] = values[i].trim();
-                }
-                result.put(key, values);
-            } else if (line.contains(SCALAR_DELIM)) {
+
+            if (line.startsWith("#")) continue;
+        
+            if (line.contains(SCALAR_DELIM)) {
                 String[] parts = line.split(SCALAR_DELIM, 2);
                 String key = parts[0].trim();
-                String value = parts[1].trim();
+                String value = ignoreComments(parts[1]).trim();
                 result.put(key, value);
             }
         }
         return result;
+    }
+
+    private String ignoreComments(String line) {
+        int index = line.indexOf("# ");
+        if (index == -1) return line;
+        return line.substring(0, index);
     }
 }

@@ -20,11 +20,11 @@ import javax.lang.model.util.Elements;
 import javax.tools.JavaFileObject;
 
 /**
- * HUMLProcessor creates HUMLAdapter classes for classes annotated with @HUML.
+ * HumlProcessor creates HumlAdapter classes for classes annotated with @Huml.
  */
-@SupportedAnnotationTypes("com.github.shpiyu.huml.HUML")
+@SupportedAnnotationTypes("com.github.shpiyu.huml.Huml")
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
-public class HUMLProcessor extends AbstractProcessor {
+public class HumlProcessor extends AbstractProcessor {
 
     // Functional interface for type conversion
     @FunctionalInterface
@@ -63,7 +63,7 @@ public class HUMLProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        for (Element e : roundEnv.getElementsAnnotatedWith(HUML.class)) {
+        for (Element e : roundEnv.getElementsAnnotatedWith(Huml.class)) {
             if (e.getKind() != ElementKind.CLASS)
                 continue;
             TypeElement classElement = (TypeElement) e;
@@ -122,20 +122,20 @@ public class HUMLProcessor extends AbstractProcessor {
                         + ")); // Unsupported type");
     }
 
-    // Generates HUMLAdapter class file
+    // Generates HumlAdapter class file
     private void generateAdapter(TypeElement classElement) {
         String packageName = elementUtils.getPackageOf(classElement).getQualifiedName().toString();
         String className = classElement.getSimpleName().toString();
-        String adapterClassName = className + "HUMLAdapter";
+        String adapterClassName = className + "HumlAdapter";
 
         StringBuilder code = new StringBuilder();
         code.append("package ").append(packageName).append(";\n")
-                .append("import com.github.shpiyu.huml.HUMLAdapter;\n")
-                .append("import com.github.shpiyu.huml.HUMLReader;\n")
-                .append("import com.github.shpiyu.huml.HUMLWriter;\n")
+                .append("import com.github.shpiyu.huml.HumlAdapter;\n")
+                .append("import com.github.shpiyu.huml.HumlReader;\n")
+                .append("import com.github.shpiyu.huml.HumlWriter;\n")
                 .append("import java.io.IOException;\n")
-                .append("import static com.github.shpiyu.huml.HUMLParserUtils.*;\n")
-                .append("public class ").append(adapterClassName).append(" extends HUMLAdapter\u003c").append(className)
+                .append("import static com.github.shpiyu.huml.HumlParserUtils.*;\n")
+                .append("public class ").append(adapterClassName).append(" extends HumlAdapter\u003c").append(className)
                 .append("\u003e {\n");
 
         fromHUML(code, classElement);
@@ -159,7 +159,7 @@ public class HUMLProcessor extends AbstractProcessor {
         String className = classElement.getSimpleName().toString();
 
         code.append("    @Override\n")
-                .append("    public ").append(className).append(" fromHUML(HUMLReader reader) throws IOException {\n")
+                .append("    public ").append(className).append(" fromHUML(HumlReader reader) throws IOException {\n")
                 .append("        ").append(className).append(" instance = new ").append(className).append("();\n")
                 .append("        java.util.Map<String, Object> map = reader.readDocument();\n");
 
@@ -187,7 +187,7 @@ public class HUMLProcessor extends AbstractProcessor {
     // Generates the toHUML method which is used to serialize Java object to HUML
     private void toHUML(StringBuilder code, Element classElement) {
         String className = classElement.getSimpleName().toString();
-        code.append("    @Override public void toHUML(HUMLWriter writer, ").append(className)
+        code.append("    @Override public void toHUML(HumlWriter writer, ").append(className)
                 .append(" value) throws IOException {\n");
 
         for (Element field : classElement.getEnclosedElements()) {
