@@ -78,21 +78,21 @@ public class HumlProcessor extends AbstractProcessor {
         // Wrapper type handlers
         // todo: handle Character
         // todo: handle Strings with special characters \t, \n, etc
-        typeHandlers.put("java.lang.Integer", field -> String.format("parseInt(map.get(\"%s\"));", field));
-        typeHandlers.put("java.lang.Double", field -> String.format("parseDouble(map.get(\"%s\"));", field));
-        typeHandlers.put("java.lang.Float", field -> String.format("parseFloat(map.get(\"%s\"));", field));
-        typeHandlers.put("java.lang.Long", field -> String.format("parseLong(map.get(\"%s\"));", field));
-        typeHandlers.put("java.lang.Short", field -> String.format("parseShort(map.get(\"%s\"));", field));
-        typeHandlers.put("java.lang.Byte", field -> String.format("parseByte(map.get(\"%s\"));", field));
-        typeHandlers.put("java.lang.String", field -> String.format("parseString(map.get(\"%s\"));", field));
+        typeHandlers.put("java.lang.Integer", field -> String.format("doc.get(\"%s\").asInteger();", field));
+        typeHandlers.put("java.lang.Double", field -> String.format("doc.get(\"%s\").asDouble();", field));
+        typeHandlers.put("java.lang.Float", field -> String.format("doc.get(\"%s\").asFloat();", field));
+        typeHandlers.put("java.lang.Long", field -> String.format("doc.get(\"%s\").asLong();", field));
+        typeHandlers.put("java.lang.Short", field -> String.format("doc.get(\"%s\").asShort();", field));
+        typeHandlers.put("java.lang.Byte", field -> String.format("doc.get(\"%s\").asByte();", field));
+        typeHandlers.put("java.lang.String", field -> String.format("doc.get(\"%s\").asString();", field));
 
         // Primitives handlers
-        typeHandlers.put("int", field -> String.format("parsePrimitiveInt(map.get(\"%s\"));", field));
-        typeHandlers.put("double", field -> String.format("parsePrimitiveDouble(map.get(\"%s\"));", field));
-        typeHandlers.put("float", field -> String.format("parsePrimitiveFloat(map.get(\"%s\"));", field));
-        typeHandlers.put("long", field -> String.format("parsePrimitiveLong(map.get(\"%s\"));", field));
-        typeHandlers.put("short", field -> String.format("parsePrimitiveShort(map.get(\"%s\"));", field));
-        typeHandlers.put("byte", field -> String.format("parsePrimitiveByte(map.get(\"%s\"));", field));
+        typeHandlers.put("int", field -> String.format("doc.get(\"%s\").asInteger();", field));
+        typeHandlers.put("double", field -> String.format("doc.get(\"%s\").asDouble();", field));
+        typeHandlers.put("float", field -> String.format("doc.get(\"%s\").asFloat();", field));
+        typeHandlers.put("long", field -> String.format("doc.get(\"%s\").asLong();", field));
+        typeHandlers.put("short", field -> String.format("doc.get(\"%s\").asShort();", field));
+        typeHandlers.put("byte", field -> String.format("doc.get(\"%s\").asByte();", field));
 
         // Initialize serialization handlers
         // For types that need String.valueOf()
@@ -161,7 +161,7 @@ public class HumlProcessor extends AbstractProcessor {
         code.append("    @Override\n")
                 .append("    public ").append(className).append(" fromHUML(HumlReader reader) throws IOException {\n")
                 .append("        ").append(className).append(" instance = new ").append(className).append("();\n")
-                .append("        java.util.Map<String, Object> map = reader.readDocument();\n");
+                .append("        HumlDocument doc = reader.readDocument();\n");
 
         for (Element field : classElement.getEnclosedElements()) {
             if (field.getKind() == ElementKind.FIELD) {

@@ -10,7 +10,7 @@ import com.github.shpiyu.huml.HumlDocument;
 import com.github.shpiyu.huml.HumlValue;
 
 public class Parser {
-    private static final Pattern NUMBER_PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?");
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("-?\\d+(\\.\\d+)?([eE][+-]?\\d+)?");
     private static final Pattern BOOLEAN_PATTERN = Pattern.compile("true|false", Pattern.CASE_INSENSITIVE);
 
     public static HumlDocument parse(String huml) {

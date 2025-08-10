@@ -41,6 +41,13 @@ public class ParserTest {
     }
 
     @Test
+    void testMaxDouble() {
+        String huml = "maxDouble: 1.7976931348623157E308";
+        HumlDocument doc = Parser.parse(huml);
+        assertEquals(Double.MAX_VALUE, doc.get("maxDouble").asDouble());
+    }
+
+    @Test
     void testNull() {
         String huml = "age: null";
         HumlDocument doc = Parser.parse(huml);

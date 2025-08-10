@@ -46,7 +46,7 @@ public class HumlValue {
     }
 
     public String asString() {
-        return type == HumlType.STRING ? (String) value : String.valueOf(value);
+        return type == HumlType.STRING ? String.valueOf(value) : null;
     }
 
     public Integer asInteger() {
